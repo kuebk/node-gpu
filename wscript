@@ -1,6 +1,6 @@
 import os
 
-srcdir = './src/'
+srcdir = '.'
 bldir = 'build'
 VERSION = '0.1.0'
 
