@@ -1,4 +1,4 @@
-#**Early alpha version**
+#**Early alpha version!**
 
 ##What is this:
 Node-gpu lets you use AMD ADL3 SDK (currently only it) bindings in node.js.
@@ -17,5 +17,5 @@ Browser asks Master every x (default 500) ms for data and draws it on
 canvas using flot (https://github.com/flot/flot) charts library.
 
 ##About:
-Since it early alpha version most of code is going to be rewriten.
+Since its early alpha version most of code is going to be rewriten!
 If you want to request a feature post an issue.
