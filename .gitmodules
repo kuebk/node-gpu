@@ -1,0 +1,3 @@
+[submodule "browser/flot"]
+	path = browser/flot
+	url = git://github.com/flot/flot.git

@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>node-gpu charts</title>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.js"></script>
+		<script type="text/javascript" src="flot/jquery.flot.js"></script>
+		<style type="text/css">
+			.chartContainer {
+				overflow: hidden;
+			}
+			.chartContainer > div {
+				float: left;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="charts"></div>
+		<script>
+			var createGraph = function(canvasName, chartData, targetElement){
+				var canvas = document.createElement('div');
+				canvas.id = canvasName;
+				canvas.style.width = 400;
+				canvas.style.height = 200;
+
+				var title = document.createElement('h2');
+				title.appendChild(document.createTextNode(canvasName));
+
+				canvas.appendChild(title);
+
+				targetElement.appendChild(canvas);
+
+				var tmp = chartData.slice(0);
+				var chart = $.plot(canvas, tmp, {
+					series: {
+						shadowSize: 0,
+						lines: { show: true },
+						points: { show: true }
+					},
+					yaxis: {
+						ticks: 10,
+						tickDecimals: 0
+					},
+					xaxis: {
+						show: false
+					},
+					legend: {
+						backgroundOpacity: 0.1,
+						backgroundColor: "#000000"
+					}
+				});
+				return chart;
+			}
+
+			var interval;
+			var stop = function(){window.clearInterval(interval)};
+
+			$.getJSON(location.protocol + '//' + location.hostname + ':8080/?getInfo', function(data){
+
+				var chartName, chartKeys, chartData = {}, charts = {}, items = ['temperature', 'fanspeed', 'activity', 'core', 'memory'];
+				var items = ['temperature', 'fanspeed', 'activity'];
+				var chartsContainer = document.getElementById('charts'), container;
+
+				for(var i = 0, l = data.length; i < l; i++){
+					chartName = data[i].name;
+					chartKeys = data[i].data;
+					chartData[data[i].name] = {};
+					charts[data[i].name] = {}
+
+					container = document.createElement('div');
+					container.id = chartName;
+					container.className = 'chartContainer';
+					chartsContainer.appendChild(container);
+
+					for(var j = 0, q = items.length; j < q; j++){
+						chartData[data[i].name][items[j]] = [];
+	
+						for(var k = 0, w = chartKeys.length; k < w; k++){
+							chartData[data[i].name][items[j]][k] = {label: chartKeys[k], data: []};
+						}
+	
+						charts[data[i].name][items[j]] = createGraph(chartName + '-' + items[j], chartData[data[i].name][items[j]], container);
+					}
+				}
+				interval = window.setInterval(function(){
+					$.getJSON(location.protocol + '//' + location.hostname + ':8080/', function(data){
+						var tmp
+						for(var i = 0, l = data.length; i < l; i++){
+
+							for(var j = 0, q = items.length; j < q; j++){
+								for(var k = 0, w = data[i].data.length; k < w; k++){
+									chartData[data[i].name][items[j]][k].data.push(data[i].data[k][items[j]]);
+
+									if(chartData[data[i].name][items[j]][k].data.length > 50){
+										chartData[data[i].name][items[j]][k].data.shift();
+									}
+								}
+
+								charts[data[i].name][items[j]].setData(prepareArray(chartData[data[i].name][items[j]]));
+								charts[data[i].name][items[j]].setupGrid();
+								charts[data[i].name][items[j]].draw();
+							}
+						}
+					});
+				}, 500);
+			});
+
+			var prepareArray = function(data){
+				var tmp = $.extend(true, [],  data);
+
+				for(var i = 0, l = tmp.length; i < l; i++){
+					//tmp.data[i] = [i, tmp.data[i]];
+					for(var j = 0, k = tmp[i].data.length; j < k; j++){
+						tmp[i].data[j] = [j, tmp[i].data[j]];
+					}
+				}
+
+				return tmp;
+			};
+		</script>
+	</body>
+</html>
+
