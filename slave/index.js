@@ -60,8 +60,6 @@ var server = net.createServer({
 },function(socket){
 	socket.setNoDelay(true);
 	socket.on('data', function(buffer){
-		console.log('data received');
-
 		var data = [];
 
 		if(buffer.toString() == 'getInfo'){
@@ -101,8 +99,6 @@ var server = net.createServer({
 			}
 		}
 
-		console.log('sending data');
 		socket.write(JSON.stringify(data));
-		console.log('sent');
 	});
 }).listen(8888);

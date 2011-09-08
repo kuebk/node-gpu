@@ -47,7 +47,6 @@ for(var i = 0, l = hosts.length; i < l; i++){
 		createHttpServer();
 	});
 	socket.on('close', function(){
-		console.log('close', arguments, this.num);
 		if(httpServerRunning){
 			httpServer.close();
 
@@ -58,9 +57,9 @@ for(var i = 0, l = hosts.length; i < l; i++){
 			httpServer.listen(httpServerPort);
 		}
 	});
-	socket.on('timeout', function(){
+	/*socket.on('timeout', function(){
 		console.log('timeout', arguments);
-	});
+	});*/
 	socket.setKeepAlive(true);
 	socket.setNoDelay(true);
 }
@@ -86,15 +85,11 @@ var createHttpServer = function(){
 	//rewriting indexes
 	reindexSockets();
 
-	console.log('STARTING HTTP SERVER');
 	httpServer = http.createServer(function(request, response){
-		console.log('request received' + (new Date()));
 		var data = [], c = 0, tmp = [];
 
 		var fnc = function(){
-			console.log('can we continue with processing request?');
 			if(sockets.length != ++c) return;
-			console.log("yes, we can\n\n\n");
 
 			var body = JSON.stringify(data);
 
@@ -105,11 +100,7 @@ var createHttpServer = function(){
 		}
 
 		sckCallback = function(d, i){
-			console.log('received data from socket', i, d.toString());
 			try{
-				if(tmp[i] != ''){
-					console.log('RECEIVED DATA FOR INCOMPLETE RESPONSE', d.toString(), tmp[i]);
-				}
 				data[i] = {
 					name: activeHosts[i],
 					data: JSON.parse(tmp[i] + d)
@@ -117,38 +108,19 @@ var createHttpServer = function(){
 				fnc();
 			}catch(e){
 				tmp[i] = tmp[i] + d.toString();
-				console.log('INCOMPLETE DATA FROM SOCKET', e.message, d.toString(), tmp[i], "\n\n");
 			}
 		};
-		/*for(var key in sockets){
-			tmp[key] = '';
-			console.log('sending data to socket', i);
-			if(request.url.indexOf('getInfo') !== -1){
-				sockets[i].write('getInfo');
-			}else{
-				sockets[i].write('getData');
-			}
-			console.log('sent');
-		}*/
 		for(var i = 0, l = sockets.length; i < l; i++){
 			if(sockets[i].writable){
 				tmp[i] = '';
-				console.log('sending data to socket', i);
 				if(request.url.indexOf('getInfo') !== -1){
 					sockets[i].write('getInfo');
 				}else{
 					sockets[i].write('getData');
 				}
-				console.log('sent');
-			}else{
-				console.log('socket is not writable', i);
 			}
 		}
 		httpServerRunning = true;
 	});
-	//server.useChunkedEncodingByDefault = false;
 	httpServer.listen(httpServerPort);
-};
-
-var receiveData = function(i, data){
 };
