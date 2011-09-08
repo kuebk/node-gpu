@@ -11,6 +11,8 @@
 			}
 			.chartContainer > div {
 				float: left;
+				text-align: center;
+				font-family: verdana;
 			}
 		</style>
 	</head>
@@ -18,17 +20,19 @@
 		<div id="charts"></div>
 		<script>
 			var createGraph = function(canvasName, chartData, targetElement){
+				var graphContainer = document.createElement('div');
+
+				var title = document.createElement('h2');
+				title.appendChild(document.createTextNode(canvasName));
+				graphContainer.appendChild(title);
+
 				var canvas = document.createElement('div');
 				canvas.id = canvasName;
 				canvas.style.width = 400;
 				canvas.style.height = 200;
+				graphContainer.appendChild(canvas);
 
-				var title = document.createElement('h2');
-				title.appendChild(document.createTextNode(canvasName));
-
-				canvas.appendChild(title);
-
-				targetElement.appendChild(canvas);
+				targetElement.appendChild(graphContainer);
 
 				var tmp = chartData.slice(0);
 				var chart = $.plot(canvas, tmp, {
@@ -54,8 +58,71 @@
 
 			var interval;
 			var stop = function(){window.clearInterval(interval)};
+			var url = location.protocol + '//' + location.hostname + ':8080/';
 
-			$.getJSON(location.protocol + '//' + location.hostname + ':8080/?getInfo', function(data){
+			$.ajax(url + '?getInfo', {
+				//'cache': false,
+				'dataType': 'json',
+				'timeout': 2000,
+				'error': function(){
+					alert('Error while querying for configuration');
+				},
+				'success': function(data){
+					var chartName, chartKeys, chartData = {}, charts = {}, items = ['temperature', 'fanspeed', 'activity', 'core', 'memory'];
+					var items = ['temperature', 'fanspeed', 'activity'];
+					var chartsContainer = document.getElementById('charts'), container;
+
+					for(var i = 0, l = data.length; i < l; i++){
+						chartName = data[i].name;
+						chartKeys = data[i].data;
+						chartData[data[i].name] = {};
+						charts[data[i].name] = {}
+	
+						container = document.createElement('div');
+						container.id = chartName;
+						container.className = 'chartContainer';
+						chartsContainer.appendChild(container);
+
+						for(var j = 0, q = items.length; j < q; j++){
+							chartData[data[i].name][items[j]] = [];
+		
+							for(var k = 0, w = chartKeys.length; k < w; k++){
+								chartData[data[i].name][items[j]][k] = {label: chartKeys[k], data: []};
+							}
+		
+							charts[data[i].name][items[j]] = createGraph(chartName + '-' + items[j], chartData[data[i].name][items[j]], container);
+						}
+					}
+
+					interval = window.setInterval(function(){
+						$.ajax(url, {
+							//'cache': false,
+							'dataType': 'json',
+							'timeout': 2000,
+							'success': function(data){
+								var tmp
+								for(var i = 0, l = data.length; i < l; i++){
+	
+									for(var j = 0, q = items.length; j < q; j++){
+										for(var k = 0, w = data[i].data.length; k < w; k++){
+											chartData[data[i].name][items[j]][k].data.push(data[i].data[k][items[j]]);
+		
+											if(chartData[data[i].name][items[j]][k].data.length > 50){
+												chartData[data[i].name][items[j]][k].data.shift();
+											}
+										}
+		
+										charts[data[i].name][items[j]].setData(prepareArray(chartData[data[i].name][items[j]]));
+										charts[data[i].name][items[j]].setupGrid();
+										charts[data[i].name][items[j]].draw();
+									}
+								}
+							}
+						});
+					}, 500);
+				}
+			});
+/*			$.getJSON(url + '?getInfo', function(data){
 
 				var chartName, chartKeys, chartData = {}, charts = {}, items = ['temperature', 'fanspeed', 'activity', 'core', 'memory'];
 				var items = ['temperature', 'fanspeed', 'activity'];
@@ -83,7 +150,7 @@
 					}
 				}
 				interval = window.setInterval(function(){
-					$.getJSON(location.protocol + '//' + location.hostname + ':8080/', function(data){
+					$.getJSON(url, function(data){
 						var tmp
 						for(var i = 0, l = data.length; i < l; i++){
 
@@ -103,7 +170,7 @@
 						}
 					});
 				}, 500);
-			});
+			});*/
 
 			var prepareArray = function(data){
 				var tmp = $.extend(true, [],  data);

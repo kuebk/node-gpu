@@ -63,8 +63,15 @@ var server = net.createServer({
 		var data = [];
 
 		if(buffer.toString() == 'getInfo'){
+			var re = new RegExp('ATI\\s*(.*?)\\s*Series'), adapterName, matches;
 			for(var i = 0, l = activeAdaptersData.length; i < l; i++){
-				data.push(activeAdaptersData[i].strAdapterName.trim());	
+				adapterName = activeAdaptersData[i].strAdapterName.trim();
+				
+				matches = re.exec(adapterName);
+
+				adapterName = matches[1] ? matches[1] : adapterName;
+
+				data.push('GPU' + i + ': ' + adapterName);	
 			}
 		}else{
 			var tmp, temperature, fan, activity;
