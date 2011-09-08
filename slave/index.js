@@ -66,7 +66,7 @@ var server = net.createServer({
 
 		if(buffer.toString() == 'getInfo'){
 			for(var i = 0, l = activeAdaptersData.length; i < l; i++){
-				data.push(activeAdaptersData[i].strAdapterName);	
+				data.push(activeAdaptersData[i].strAdapterName.trim());	
 			}
 		}else{
 			var tmp, temperature, fan, activity;
